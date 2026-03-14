@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>라이온코리아 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f0f4f8;--card:#fff;--border:#e2eaf2;
+  --navy:#0f2744;--blue:#1a56db;--green:#057a55;--red:#c81e1e;--amber:#92400e;
+  --t1:#111827;--t2:#6b7280;--t3:#9ca3af;
+  --r:14px
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+.hdr{background:var(--navy);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:16px;font-weight:700}
+.hdr-sub{font-size:11px;color:#94a3b8;margin-top:1px}
+.hdr-btn{background:rgba(255,255,255,.12);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);position:sticky;top:52px;z-index:99;overflow-x:auto}
+.tab{flex:none;padding:13px 18px;font-size:13px;font-weight:600;color:var(--t2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.pane{display:none;padding-bottom:50px}
+.pane.on{display:block}
+.card{background:var(--card);border-radius:var(--r);padding:18px;margin:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--border)}
+.card-title{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.field input,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--t1);outline:none;font-family:'Noto Sans KR',sans-serif}
+.field input:focus{border-color:var(--blue)}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:opacity .15s}
+.btn:active{opacity:.8}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-gray{background:#f1f5f9;color:var(--t1)}
+.btn-green{background:var(--green);color:#fff}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px}
+.sbox{background:#fff;border-radius:12px;padding:14px 10px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--border)}
+.sbox-n{font-size:28px;font-weight:900}
+.sbox-l{font-size:11px;color:var(--t3);margin-top:3px}
+.ccard{background:#fff;border-radius:12px;padding:14px 16px;margin:0 14px 10px;box-shadow:0 1px 6px rgba(0,0,0,.06);border-left:4px solid var(--border);border:1px solid var(--border);border-left:4px solid var(--border)}
+.ccard.dep{border-left-color:var(--amber)}
+.ccard.arr{border-left-color:var(--blue)}
+.ccard.done{border-left-color:var(--green)}
+.ccard-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.ccard-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.chip-wait{background:#f1f5f9;color:var(--t2)}
+.chip-dep{background:#fef3c7;color:#92400e}
+.chip-arr{background:#dbeafe;color:#1e40af}
+.chip-done{background:#d1fae5;color:#065f46}
+.msg{padding:11px 14px;border-radius:10px;font-size:13px;font-weight:600;display:none;margin-top:10px}
+.msg.info{background:#eff6ff;color:#1d4ed8}
+.msg.ok{background:#ecfdf5;color:#065f46}
+.msg.err{background:#fef2f2;color:#991b1b}
+.msg.warn{background:#fffbeb;color:#92400e}
+.empty{text-align:center;padding:50px 20px;color:var(--t3)}
+.empty-ico{font-size:40px;margin-bottom:10px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;z-index:999;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1}
+.tbl-wrap{overflow-x:auto;margin:0 14px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06);font-size:12px}
+th{background:var(--navy);color:#fff;padding:10px 8px;text-align:left;white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--t1)}
+tr:nth-child(even) td{background:#f8fafc}
+/* QR */
+#qr-svg-wrap{display:flex;justify-content:center;padding:16px;background:#f8fafc;border-radius:12px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div>
+    <div class="hdr-title">⚙️ 라이온코리아 관리자</div>
+    <div class="hdr-sub">납품 현황 관리</div>
+  </div>
+  <button class="hdr-btn" onclick="goDriver()">기사앱</button>
+</div>
+
+<div id="login-wall" style="padding:40px 20px;text-align:center;display:block">
+  <div style="font-size:40px;margin-bottom:16px">🔐</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:8px">관리자 로그인</div>
+  <div style="font-size:13px;color:var(--t2);margin-bottom:20px">비밀번호를 입력해주세요</div>
+  <div style="max-width:300px;margin:0 auto">
+    <input type="password" id="pw-input" placeholder="비밀번호" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;outline:none;font-family:'Noto Sans KR',sans-serif" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-blue" onclick="doLogin()">로그인</button>
+    <div id="pw-msg" style="color:#c81e1e;font-size:13px;margin-top:8px;display:none">비밀번호가 틀렸습니다</div>
+  </div>
+</div>
+
+<div id="admin-body" style="display:none">
+  <div class="tabs">
+    <button class="tab on" data-pane="dash"     onclick="switchTab(this)">대시보드</button>
+    <button class="tab"    data-pane="history"  onclick="switchTab(this)">전체 이력</button>
+    <button class="tab"    data-pane="upload"   onclick="switchTab(this)">엑셀 업로드</button>
+    <button class="tab"    data-pane="qr"       onclick="switchTab(this)">QR 코드</button>
+    <button class="tab"    data-pane="settings" onclick="switchTab(this)">설정</button>
+  </div>
+
+  <!-- 대시보드 -->
+  <div id="pane-dash" class="pane on"></div>
+
+  <!-- 전체 이력 -->
+  <div id="pane-history" class="pane"></div>
+
+  <!-- 업로드 -->
+  <div id="pane-upload" class="pane">
+    <div class="card">
+      <div class="card-title">엑셀 업로드</div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:14px">날짜, 배차번호, 거래처, 기사명, 주소, 품목, 수량 컬럼이 포함된 엑셀 파일을 업로드하세요.</p>
+      <div class="field"><label>파일 선택</label><input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="handleUpload(this)"></div>
+      <div class="msg" id="upload-msg"></div>
+    </div>
+  </div>
+
+  <!-- QR -->
+  <div id="pane-qr" class="pane">
+    <div class="card">
+      <div class="card-title">기사앱 QR 코드</div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:14px">기사들이 스캔하면 기사앱으로 바로 접속합니다.</p>
+      <div id="qr-svg-wrap"><div id="qr-inner"></div></div>
+      <div id="qr-url-disp" style="font-size:11px;color:var(--t2);word-break:break-all;margin-bottom:12px;padding:8px;background:#f8fafc;border-radius:8px"></div>
+      <button class="btn btn-blue" style="font-size:14px;padding:12px" onclick="dlQR()">📥 QR 이미지 저장</button>
+    </div>
+  </div>
+
+  <!-- 설정 -->
+  <div id="pane-settings" class="pane">
+    <div class="card">
+      <div class="card-title">Apps Script URL</div>
+      <div class="field"><label>배포 URL</label><input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-blue" style="font-size:13px;padding:11px" onclick="saveUrl()">저장</button>
+        <button class="btn btn-gray" style="font-size:13px;padding:11px" onclick="testConn()">연결 테스트</button>
+      </div>
+      <div class="msg" id="conn-msg" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">기사앱 URL</div>
+      <div class="field"><label>기사앱 주소 (QR에 사용)</label><input type="url" id="driver-url" placeholder="https://rmaekd1983-cyber.github.io/LionKorea/driver.html"></div>
+      <button class="btn btn-blue" style="font-size:13px;padding:11px" onclick="saveDriverUrl()">저장</button>
+    </div>
+    <div class="card">
+      <div class="card-title">현재 설정</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:6px">API URL:</div>
+      <div id="cur-url" style="font-size:11px;color:var(--t1);word-break:break-all;margin-bottom:10px"></div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:6px">기사앱 URL:</div>
+      <div id="cur-driver-url" style="font-size:11px;color:var(--t1);word-break:break-all"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var API = localStorage.getItem('lk-api') || 'https://script.google.com/macros/s/AKfycbyMSWc_oCLQFStmCUnwg-Zsd1ghmfVW9tnxmE4LLvfX3wKc1TMSVkXcRMFQ51v_DPtb/exec';
+var DRIVER_URL = localStorage.getItem('lk-driver-url') || 'https://rmaekd1983-cyber.github.io/LionKorea/driver.html';
+var ADMIN_PW = 'lion2024';
+
+function doLogin(){
+  var pw = document.getElementById('pw-input').value;
+  if(pw === ADMIN_PW){
+    document.getElementById('login-wall').style.display='none';
+    document.getElementById('admin-body').style.display='block';
+    document.getElementById('cfg-url').value = API;
+    document.getElementById('driver-url').value = DRIVER_URL;
+    document.getElementById('cur-url').textContent = API;
+    document.getElementById('cur-driver-url').textContent = DRIVER_URL;
+    renderDash();
+    renderQR();
+  } else {
+    document.getElementById('pw-msg').style.display='block';
+  }
+}
+
+function goDriver(){
+  window.location.href = DRIVER_URL;
+}
+
+function switchTab(btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('on');});
+  btn.classList.add('on');
+  var pane = btn.dataset.pane;
+  document.getElementById('pane-'+pane).classList.add('on');
+  if(pane==='dash')    renderDash();
+  if(pane==='history') renderHistory();
+  if(pane==='qr')      renderQR();
+}
+
+// ── 대시보드 ──
+function renderDash(){
+  var pane=document.getElementById('pane-dash');
+  pane.innerHTML='<div class="empty"><div class="empty-ico">⏳</div><p>불러오는 중...</p></div>';
+  var today=todayStr();
+  jsonp(API,{action:'dashboard',date:today},function(err,data){
+    if(err||!data||!data.ok){pane.innerHTML='<div class="empty"><div class="empty-ico">❌</div><p>불러오기 실패</p></div>';return;}
+    var s=data.stats||{};
+    var html='<div class="sgrid">'
+      +'<div class="sbox"><div class="sbox-n">'+s.total+'</div><div class="sbox-l">전체</div></div>'
+      +'<div class="sbox"><div class="sbox-n" style="color:var(--green)">'+s.done+'</div><div class="sbox-l">하차완료</div></div>'
+      +'<div class="sbox"><div class="sbox-n" style="color:var(--blue)">'+s.arr+'</div><div class="sbox-l">도착</div></div>'
+      +'<div class="sbox"><div class="sbox-n" style="color:#6b7280">'+(s.dep+s.wait)+'</div><div class="sbox-l">대기/출발</div></div>'
+      +'</div>'
+      +'<div style="padding:0 14px 8px;font-size:12px;font-weight:700;color:var(--t2)">오늘 납품 현황 ('+today+')</div>';
+    if(!data.rows||!data.rows.length){html+='<div class="empty"><div class="empty-ico">📭</div><p>오늘 데이터 없음</p></div>';}
+    else{html+=(data.rows||[]).map(function(r){return rowCard(r);}).join('');}
+    pane.innerHTML=html;
+  });
+}
+
+function rowCard(r){
+  var cls=r.status==='done'?'done':r.status==='arr'?'arr':r.status==='dep'?'dep':'';
+  return '<div class="ccard '+cls+'">'
+    +'<div class="ccard-name">'+r.cust+'</div>'
+    +'<div style="font-size:12px;color:var(--t2);margin-bottom:6px">배차 '+r.batch+' · '+r.driver+(r.carNum?' · '+r.carNum:'')+'</div>'
+    +'<div class="ccard-meta">'+chipHtml(r.status)
+    +(r.depTime? '<span style="font-size:11px;color:var(--t2)">출발 '+r.depTime+'</span>':'')
+    +(r.arrTime? '<span style="font-size:11px;color:var(--t2)">도착 '+r.arrTime+'</span>':'')
+    +(r.doneTime?'<span style="font-size:11px;color:var(--t2)">하차 '+r.doneTime+'</span>':'')
+    +'</div></div>';
+}
+
+function chipHtml(s){
+  if(s==='done') return '<span class="chip chip-done">✅ 하차완료</span>';
+  if(s==='arr')  return '<span class="chip chip-arr">📍 도착</span>';
+  if(s==='dep')  return '<span class="chip chip-dep">🚚 출발중</span>';
+  return '<span class="chip chip-wait">⏳ 대기</span>';
+}
+
+// ── 이력 ──
+function renderHistory(){
+  var pane=document.getElementById('pane-history');
+  pane.innerHTML='<div class="empty"><div class="empty-ico">⏳</div><p>불러오는 중...</p></div>';
+  jsonp(API,{action:'dashboard',date:''},function(err,data){
+    if(err||!data||!data.ok){pane.innerHTML='<div class="empty"><div class="empty-ico">❌</div><p>실패</p></div>';return;}
+    if(!data.rows||!data.rows.length){pane.innerHTML='<div class="empty"><div class="empty-ico">📭</div><p>이력 없음</p></div>';return;}
+    pane.innerHTML='<div class="tbl-wrap"><table>'
+      +'<thead><tr><th>날짜</th><th>배차</th><th>거래처</th><th>기사</th><th>차량</th><th>상태</th><th>출발</th><th>도착</th><th>하차</th></tr></thead>'
+      +'<tbody>'+data.rows.map(function(r){
+        return '<tr>'
+          +'<td>'+r.date+'</td><td>'+r.batch+'</td>'
+          +'<td style="font-weight:700">'+r.cust+'</td>'
+          +'<td>'+r.driver+'</td><td>'+r.carNum+'</td>'
+          +'<td>'+chipHtml(r.status)+'</td>'
+          +'<td style="font-family:monospace">'+r.depTime+'</td>'
+          +'<td style="font-family:monospace">'+r.arrTime+'</td>'
+          +'<td style="font-family:monospace">'+r.doneTime+'</td>'
+          +'</tr>';
+      }).join('')+'</tbody></table></div>';
+  });
+}
+
+// ── 엑셀 업로드 ──
+function handleUpload(input){
+  var file=input.files[0]; if(!file)return;
+  var msg=document.getElementById('upload-msg');
+  setMsg(msg,'info','⏳ 파일 읽는 중...');
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var wb=XLSX.read(ev.target.result,{type:'binary',cellDates:true});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!raw.length){setMsg(msg,'err','❌ 데이터 없음');return;}
+      var rows=raw.map(function(r){
+        return {
+          date:   fmtDate(cv(r,['날짜','일자','출고일','Date','date'])),
+          batch:  cv(r,['배차번호','배차','Batch','batch']),
+          cust:   cv(r,['거래처','거래처명','Cust','cust']),
+          driver: cv(r,['기사명','기사','Driver','driver']),
+          addr:   cv(r,['주소','배송지','Addr','addr','address']),
+          item:   cv(r,['품목','제품','Item','item']),
+          qty:    cv(r,['수량','박스수','Qty','qty'])
+        };
+      }).filter(function(r){return r.cust||r.batch;});
+      setMsg(msg,'info','⏳ Sheets 동기화 중 ('+rows.length+'건)...');
+      fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({action:'upload',rows:rows})
+      }).then(function(){
+        setMsg(msg,'ok','✅ '+rows.length+'건 동기화 완료');
+        toast('✅ 업로드 완료 '+rows.length+'건');
+      }).catch(function(e){setMsg(msg,'err','❌ 오류: '+e.message);});
+    }catch(e){setMsg(msg,'err','❌ 파일 오류: '+e.message);}
+    input.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+function cv(row,keys){for(var i=0;i<keys.length;i++){var v=row[keys[i]];if(v!==undefined&&v!=='')return String(v).trim();}return '';}
+function fmtDate(v){if(!v)return '';if(v instanceof Date){return v.getFullYear()+'-'+p2(v.getMonth()+1)+'-'+p2(v.getDate());}var s=String(v).trim();if(/^\d{5}$/.test(s)){var d=new Date(Math.round((+s-25569)*86400000));return d.getUTCFullYear()+'-'+p2(d.getUTCMonth()+1)+'-'+p2(d.getUTCDate());}s=s.replace(/\./g,'-').replace(/\//g,'-');var c=s.replace(/-/g,'');if(c.length===8)return c.slice(0,4)+'-'+c.slice(4,6)+'-'+c.slice(6,8);if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);return s;}
+
+// ── QR ──
+function renderQR(){
+  var inner=document.getElementById('qr-inner');
+  if(inner.children.length>0)return;
+  document.getElementById('qr-url-disp').textContent=DRIVER_URL;
+  try{inner.innerHTML=makeQRSVG(DRIVER_URL,260);}
+  catch(e){inner.innerHTML='<p style="color:red;font-size:12px">QR 오류: '+e.message+'</p>';}
+}
+
+function dlQR(){
+  var svgEl=document.querySelector('#qr-inner svg');
+  if(!svgEl){toast('QR 생성 안됨');return;}
+  var s=new XMLSerializer().serializeToString(svgEl);
+  var blob=new Blob([s],{type:'image/svg+xml'});
+  var u=URL.createObjectURL(blob);
+  var img=new Image();
+  img.onload=function(){
+    var c=document.createElement('canvas');c.width=600;c.height=600;
+    var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,600,600);
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,600,600);
+    URL.revokeObjectURL(u);
+    var a=document.createElement('a');a.download='lionkorea_driver_qr.png';a.href=c.toDataURL('image/png');a.click();
+    toast('📥 QR 저장됨');
+  };
+  img.onerror=function(){URL.revokeObjectURL(u);var a=document.createElement('a');a.download='lionkorea_driver_qr.svg';a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);a.click();toast('📥 QR(SVG) 저장됨');};
+  img.src=u;
+}
+
+function makeQRSVG(text,sz){
+  var EXP=new Array(512),LOG=new Array(256);
+  (function(){var x=1;for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x*=2;if(x>=256)x^=285;}for(var i=255;i<512;i++)EXP[i]=EXP[i-255];})();
+  function mul(a,b){return(a&&b)?EXP[(LOG[a]+LOG[b])%255]:0;}
+  function gp(n){var g=[1];for(var i=0;i<n;i++){var ng=new Array(g.length+1).fill(0);for(var j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i]);}g=ng;}return g;}
+  function rse(data,nec){var gen=gp(nec),r=data.slice();for(var i=0;i<nec;i++)r.push(0);for(var i=0;i<data.length;i++){var c=r[i];if(!c)continue;for(var j=1;j<=nec;j++)r[i+j]^=mul(gen[j],c);}return r.slice(data.length);}
+  var VER_CAP=[0,16,28,44,64,86,108,124,154,182,216];
+  var RS_M=[[0,0,0],[16,10,1],[28,16,1],[44,26,1],[64,18,2],[86,24,2],[108,16,4],[124,18,4],[154,22,4],[182,22,5],[216,26,5]];
+  var ver=1;for(var v=1;v<=10;v++){if(VER_CAP[v]>=text.length+2){ver=v;break;}}
+  var N=ver*4+17,rsm=RS_M[ver],totalData=rsm[0],ecPB=rsm[1],nb=rsm[2],dpb=Math.floor(totalData/nb);
+  var bits=[];function addB(v,n){for(var i=n-1;i>=0;i--)bits.push((v>>i)&1);}
+  addB(4,4);addB(text.length,ver<10?8:16);
+  for(var i=0;i<text.length;i++)addB(text.charCodeAt(i)&255,8);
+  addB(0,4);while(bits.length%8)bits.push(0);
+  var bytes=[];for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];bytes.push(b);}
+  var PAD=[0xEC,0x11];while(bytes.length<totalData)bytes.push(PAD[bytes.length%2]);
+  var blocks=[];for(var b=0;b<nb;b++)blocks.push(bytes.slice(b*dpb,(b+1)*dpb));
+  var ecBlocks=blocks.map(function(bl){return rse(bl,ecPB);});
+  var cw=[];for(var i=0;i<dpb;i++)for(var b=0;b<nb;b++)cw.push(blocks[b][i]);
+  for(var i=0;i<ecPB;i++)for(var b=0;b<nb;b++)cw.push(ecBlocks[b][i]);
+  var m=[];for(var r=0;r<N;r++){m.push([]);for(var c=0;c<N;c++)m[r].push(-1);}
+  function set(r,c,v){if(r>=0&&r<N&&c>=0&&c<N)m[r][c]=v;}
+  function finder(tr,tc){for(var r=0;r<7;r++)for(var c=0;c<7;c++)m[tr+r][tc+c]=(r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4))?1:0;for(var i=0;i<8;i++){set(tr+7,tc+i,0);set(tr+i,tc+7,0);}}
+  finder(0,0);finder(0,N-7);finder(N-7,0);
+  var AP=[[]  ,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+  var ap=AP[ver]||[];for(var pi=0;pi<ap.length;pi++)for(var pj=0;pj<ap.length;pj++){var cr=ap[pi],cc=ap[pj];if((cr<9&&cc<9)||(cr<9&&cc>N-10)||(cr>N-10&&cc<9))continue;for(var r=-2;r<=2;r++)for(var c=-2;c<=2;c++)set(cr+r,cc+c,(Math.abs(r)===2||Math.abs(c)===2||(r===0&&c===0))?1:0);}
+  for(var i=8;i<N-8;i++){if(m[6][i]===-1)m[6][i]=(i%2===0)?1:0;if(m[i][6]===-1)m[i][6]=(i%2===0)?1:0;}
+  m[4*ver+9][8]=1;
+  var FC1=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+  var FC2=[[N-1,8],[N-2,8],[N-3,8],[N-4,8],[N-5,8],[N-6,8],[N-7,8],[8,N-8],[8,N-7],[8,N-6],[8,N-5],[8,N-4],[8,N-3],[8,N-2],[8,N-1]];
+  for(var i=0;i<15;i++){set(FC1[i][0],FC1[i][1],2);set(FC2[i][0],FC2[i][1],2);}
+  var dbits=[];for(var i=0;i<cw.length;i++)for(var j=7;j>=0;j--)dbits.push((cw[i]>>j)&1);
+  var bi=0,up=true;for(var c=N-1;c>=1;c-=2){if(c===6)c=5;for(var ii=0;ii<N;ii++){var r=up?(N-1-ii):ii;for(var dc=0;dc<=1;dc++)if(m[r][c-dc]===-1&&bi<dbits.length)m[r][c-dc]=dbits[bi++];}up=!up;}
+  for(var r=0;r<N;r++)for(var c=0;c<N;c++)if(m[r][c]===-1)m[r][c]=0;
+  function am(mp){var r2=[];for(var r=0;r<N;r++){r2.push([]);for(var c=0;c<N;c++){var v=m[r][c];if(v===0||v===1){var inv=(mp===0)?(r+c)%2===0:(mp===1)?r%2===0:(mp===2)?c%3===0:(mp===3)?(r+c)%3===0:(mp===4)?(Math.floor(r/2)+Math.floor(c/3))%2===0:(mp===5)?(r*c)%2+(r*c)%3===0:(mp===6)?((r*c)%2+(r*c)%3)%2===0:((r+c)%2+(r*c)%3)%2===0;r2[r].push(inv?v^1:v);}else r2[r].push(v);}}return r2;}
+  function pen(mat){var p=0;for(var r=0;r<N;r++){var run=1;for(var c=1;c<N;c++){if(mat[r][c]===mat[r][c-1])run++;else{if(run>=5)p+=3+(run-5);run=1;}}if(run>=5)p+=3+(run-5);}for(var c=0;c<N;c++){var run=1;for(var r=1;r<N;r++){if(mat[r][c]===mat[r-1][c])run++;else{if(run>=5)p+=3+(run-5);run=1;}}if(run>=5)p+=3+(run-5);}for(var r=0;r<N-1;r++)for(var c=0;c<N-1;c++)if(mat[r][c]===mat[r+1][c]&&mat[r][c]===mat[r][c+1]&&mat[r][c]===mat[r+1][c+1])p+=3;return p;}
+  var FMT=[[1,0,1,0,1,0,0,0,0,0,1,0,0,1,0],[1,0,1,0,0,1,1,0,0,1,1,1,0,0,1],[1,0,1,1,1,1,0,0,1,1,0,0,1,1,0],[1,0,1,1,0,0,1,0,1,0,0,1,1,0,1],[1,0,0,0,1,0,1,1,1,1,1,0,0,0,1],[1,0,0,0,0,1,0,1,1,0,1,1,0,1,0],[1,0,0,1,1,1,1,1,0,0,0,0,1,0,1],[1,0,0,1,0,0,0,1,0,1,0,1,1,1,0]];
+  function pf(mat,mp){var fb=FMT[mp];for(var i=0;i<15;i++){mat[FC1[i][0]][FC1[i][1]]=fb[i];mat[FC2[i][0]][FC2[i][1]]=fb[i];}}
+  var bP=Infinity,bMask=0,bM=null;for(var mp=0;mp<8;mp++){var masked=am(mp);pf(masked,mp);var p=pen(masked);if(p<bP){bP=p;bMask=mp;bM=masked;}}
+  var cell=Math.floor(sz/(N+10)),q=Math.floor((sz-cell*N)/2),total=cell*(N+10);
+  var rects='';for(var r=0;r<N;r++)for(var c=0;c<N;c++)if(bM[r][c]===1)rects+='<rect x="'+((c)*cell+q)+'" y="'+((r)*cell+q)+'" width="'+cell+'" height="'+cell+'"/>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' '+total+'" width="'+total+'" height="'+total+'">'
+    +'<rect width="100%" height="100%" fill="white"/><g fill="black">'+rects+'</g></svg>';
+}
+
+// ── 설정 ──
+function saveUrl(){var url=document.getElementById('cfg-url').value.trim();if(!url){toast('URL 입력필요');return;}API=url;localStorage.setItem('lk-api',url);document.getElementById('cur-url').textContent=url;document.getElementById('qr-inner').innerHTML='';toast('✅ 저장됨');}
+function saveDriverUrl(){var url=document.getElementById('driver-url').value.trim();if(!url){toast('URL 입력필요');return;}DRIVER_URL=url;localStorage.setItem('lk-driver-url',url);document.getElementById('cur-driver-url').textContent=url;document.getElementById('qr-inner').innerHTML='';toast('✅ 저장됨');}
+function testConn(){var msg=document.getElementById('conn-msg');setMsg(msg,'info','⏳ 테스트 중...');jsonp(API,{action:'ping'},function(err,data){if(err||!data||!data.ok)setMsg(msg,'err','❌ 실패: '+(err||'오류'));else setMsg(msg,'ok','✅ 연결 성공: '+data.msg);});}
+
+// ── 공통 ──
+function p2(n){return('0'+n).slice(-2);}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function setMsg(el,type,txt){el.className='msg '+type;el.textContent=txt;el.style.display='block';}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},2500);}
+function jsonp(url,params,cb){var name='lk'+Date.now()+'_'+Math.floor(Math.random()*9999);var qs=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');var timer=setTimeout(function(){cleanup();cb('타임아웃');},15000);function cleanup(){delete window[name];var s=document.getElementById(name);if(s)s.parentNode.removeChild(s);clearTimeout(timer);}window[name]=function(data){cleanup();cb(null,data);};var s=document.createElement('script');s.id=name;s.src=url+'?'+qs+'&callback='+name;s.onerror=function(){cleanup();cb('로드오류');};document.head.appendChild(s);}
+</script>
+</body>
+</html>

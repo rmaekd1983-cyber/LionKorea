@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>라이온코리아 기사앱</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f1923;--card:#1a2535;--card2:#1e2d42;--border:#253347;
+  --accent:#00c9a7;--accent2:#0090ff;--warn:#ffb84d;--danger:#ff5f5f;
+  --t1:#f0f4f8;--t2:#8899aa;--t3:#4d6070;
+  --r:16px
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+
+/* 헤더 */
+.hdr{background:linear-gradient(135deg,#0a3d62,#1a2535);padding:16px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+.hdr-logo{display:flex;align-items:center;gap:10px}
+.hdr-icon{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.hdr-title{font-size:16px;font-weight:700;color:var(--t1)}
+.hdr-sub{font-size:11px;color:var(--t2);margin-top:1px}
+
+/* 화면 */
+.scr{display:none;min-height:100vh;padding-bottom:40px}
+.scr.on{display:block}
+
+/* 카드 */
+.card{background:var(--card);border-radius:var(--r);padding:18px;margin:12px 16px;border:1px solid var(--border)}
+.card-title{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+
+/* 폼 */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;letter-spacing:.3px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;background:var(--card2);border:1.5px solid var(--border);
+  border-radius:10px;font-size:15px;color:var(--t1);outline:none;
+  font-family:'Noto Sans KR',sans-serif;transition:border-color .2s
+}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:#1a2535}
+
+/* 버튼 */
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif;letter-spacing:.3px}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:var(--accent);color:#0a1a14}
+.btn-blue{background:var(--accent2);color:#fff}
+.btn-warn{background:var(--warn);color:#1a1000}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--t2)}
+.btn-sm{padding:10px 16px;font-size:13px;border-radius:9px;display:inline-block;width:auto}
+
+/* 거래처 목록 */
+.clist{padding:0 16px}
+.citem{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.citem::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--border);border-radius:4px 0 0 4px}
+.citem.dep::before{background:var(--warn)}
+.citem.arr::before{background:var(--accent2)}
+.citem.done::before{background:var(--accent)}
+.citem:active{transform:scale(.98)}
+.citem-name{font-size:17px;font-weight:700;margin-bottom:4px}
+.citem-addr{font-size:12px;color:var(--t2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.citem-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* 배지 */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-wait{background:rgba(255,255,255,.06);color:var(--t2)}
+.badge-dep{background:rgba(255,184,77,.15);color:var(--warn)}
+.badge-arr{background:rgba(0,144,255,.15);color:var(--accent2)}
+.badge-done{background:rgba(0,201,167,.15);color:var(--accent)}
+
+/* 상세 화면 */
+.det-hero{background:linear-gradient(135deg,#0a3d62 0%,#1a2535 100%);padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.det-badge{margin-bottom:10px}
+.det-name{font-size:24px;font-weight:900;margin-bottom:4px;line-height:1.2}
+.det-meta{font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.det-addr{font-size:12px;color:var(--t3);display:flex;align-items:center;gap:5px}
+
+/* 시간 카드들 */
+.trow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 16px 12px}
+.tcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center}
+.tcard-lbl{font-size:10px;font-weight:700;color:var(--t2);letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
+.tcard input[type=time]{width:100%;background:transparent;border:none;color:var(--t1);font-size:18px;font-weight:700;text-align:center;outline:none;padding:0;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.tcard.active-dep{border-color:var(--warn);background:rgba(255,184,77,.06)}
+.tcard.active-arr{border-color:var(--accent2);background:rgba(0,144,255,.06)}
+.tcard.active-done{border-color:var(--accent);background:rgba(0,201,167,.06)}
+
+/* 버튼 3개 그리드 */
+.btn3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 16px 12px}
+
+/* 네비 버튼 */
+.nav-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--t1);font-size:14px;font-weight:600;cursor:pointer;width:100%;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.nav-btn:active{transform:scale(.97)}
+
+/* 기사 정보 */
+.driver-card{background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.2);border-radius:12px;padding:14px;margin:0 16px 12px;display:flex;align-items:center;gap:12px}
+.driver-avatar{width:44px;height:44px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#0a1a14;flex-shrink:0}
+
+/* 메시지 */
+.msg{margin:0 16px 10px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;display:none}
+.msg.info{background:rgba(0,144,255,.12);color:var(--accent2)}
+.msg.ok{background:rgba(0,201,167,.12);color:var(--accent)}
+.msg.err{background:rgba(255,95,95,.12);color:var(--danger)}
+.msg.warn{background:rgba(255,184,77,.12);color:var(--warn)}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:60px 20px}
+.empty-ico{font-size:48px;margin-bottom:12px}
+.empty-t{font-size:16px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.empty-s{font-size:13px;color:var(--t3)}
+
+/* 토스트 */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2535;border:1px solid var(--border);color:var(--t1);padding:12px 22px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 구분선 */
+.divider{height:1px;background:var(--border);margin:0 16px 12px}
+
+/* 스텝 인디케이터 */
+.steps{display:flex;align-items:center;padding:10px 16px 0;gap:4px}
+.step{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+.step.done-step{background:var(--accent)}
+.step.cur-step{background:var(--accent2)}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+  화면1: 배차 조회
+════════════════════════════ -->
+<div id="s1" class="scr on">
+  <div class="hdr">
+    <div class="hdr-inner">
+      <div class="hdr-logo">
+        <div class="hdr-icon">🚚</div>
+        <div>
+          <div class="hdr-title">라이온코리아</div>
+          <div class="hdr-sub">기사 납품 앱</div>
+        </div>
+      </div>
+    </div>
+    <div class="steps" style="margin-top:10px">
+      <div class="step cur-step" id="st1"></div>
+      <div class="step" id="st2"></div>
+      <div class="step" id="st3"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">배차 조회</div>
+    <div class="field">
+      <label>날짜</label>
+      <input type="date" id="d-date">
+    </div>
+    <div class="field">
+      <label>배차번호</label>
+      <input type="text" id="d-batch" placeholder="예) 10001" inputmode="numeric">
+    </div>
+    <button class="btn btn-accent" onclick="doSearch()">배차 조회하기</button>
+  </div>
+
+  <div id="msg1" class="msg"></div>
+  <div id="cust-list" class="clist"></div>
+</div>
+
+<!-- ════════════════════════════
+  화면2: 기사 정보 입력
+════════════════════════════ -->
+<div id="s2" class="scr">
+  <div class="hdr">
+    <div class="hdr-inner">
+      <button class="btn-ghost btn-sm" onclick="goBack('s1')" style="padding:8px 14px">← 뒤로</button>
+      <div style="text-align:right">
+        <div class="hdr-title" id="s2-title"></div>
+        <div class="hdr-sub" id="s2-sub"></div>
+      </div>
+    </div>
+    <div class="steps" style="margin-top:10px">
+      <div class="step done-step"></div>
+      <div class="step cur-step"></div>
+      <div class="step"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">기사 정보</div>
+    <div class="field"><label>기사 이름</label><input type="text" id="drv-name" placeholder="홍길동"></div>
+    <div class="field"><label>차량번호</label><input type="text" id="drv-car" placeholder="예) 12가 3456"></div>
+    <div class="field"><label>연락처</label><input type="tel" id="drv-tel" placeholder="010-0000-0000"></div>
+    <button class="btn btn-accent" onclick="confirmDriver()">다음 → 시간 기록</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+  화면3: 시간 기록
+════════════════════════════ -->
+<div id="s3" class="scr">
+  <div class="hdr">
+    <div class="hdr-inner">
+      <button class="btn-ghost btn-sm" onclick="goBack('s2')" style="padding:8px 14px">← 뒤로</button>
+      <div id="det-badge" class="det-badge"></div>
+    </div>
+  </div>
+  <div class="det-hero">
+    <div class="det-name" id="det-name"></div>
+    <div class="det-meta" id="det-meta"></div>
+    <div class="det-addr" id="det-addr">📍 <span id="det-addr-txt"></span></div>
+  </div>
+
+  <div style="height:12px"></div>
+
+  <!-- 기사 정보 요약 -->
+  <div class="driver-card">
+    <div class="driver-avatar" id="drv-initial">?</div>
+    <div>
+      <div style="font-size:14px;font-weight:700" id="drv-summary"></div>
+      <div style="font-size:12px;color:var(--t2)" id="drv-car-summary"></div>
+    </div>
+  </div>
+
+  <!-- 시간 입력 -->
+  <div class="trow">
+    <div class="tcard" id="tc-dep">
+      <div class="tcard-lbl">출발</div>
+      <input type="time" id="t-dep" onchange="onTime('dep',this.value)">
+    </div>
+    <div class="tcard" id="tc-arr">
+      <div class="tcard-lbl">도착</div>
+      <input type="time" id="t-arr" onchange="onTime('arr',this.value)">
+    </div>
+    <div class="tcard" id="tc-done">
+      <div class="tcard-lbl">하차완료</div>
+      <input type="time" id="t-done" onchange="onTime('done',this.value)">
+    </div>
+  </div>
+
+  <!-- 즉시 기록 버튼 -->
+  <div class="btn3">
+    <button class="btn btn-warn" style="font-size:13px;padding:12px" onclick="stamp('dep')">🚚 지금 출발</button>
+    <button class="btn btn-blue" style="font-size:13px;padding:12px" onclick="stamp('arr')">📍 지금 도착</button>
+    <button class="btn btn-accent" style="font-size:13px;padding:12px" onclick="stamp('done')">✅ 하차완료</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 네이버 지도 -->
+  <div style="margin:0 16px 12px">
+    <button class="nav-btn" onclick="openNaver()">
+      🗺 네이버 지도로 경로 안내
+    </button>
+  </div>
+
+  <!-- 카카오 지도 -->
+  <div style="margin:0 16px 12px">
+    <button class="nav-btn" onclick="openKakao()">
+      🟡 카카오맵으로 경로 안내
+    </button>
+  </div>
+
+  <div class="card" style="margin-top:0">
+    <div class="field" style="margin:0">
+      <label>메모 (선택)</label>
+      <textarea id="det-memo" rows="2" placeholder="특이사항 입력" oninput="onMemo(this.value)"></textarea>
+    </div>
+  </div>
+
+  <div id="push-msg" class="msg" style="margin-top:8px"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ────────────────────────────
+// 설정
+// ────────────────────────────
+var API = 'https://script.google.com/macros/s/AKfycbyMSWc_oCLQFStmCUnwg-Zsd1ghmfVW9tnxmE4LLvfX3wKc1TMSVkXcRMFQ51v_DPtb/exec';
+var ORIGIN_NAME = '라이온코리아';
+var ORIGIN_ADDR = '인천 중구 서해대로140번길 23';
+
+// ────────────────────────────
+// 상태
+// ────────────────────────────
+var custList = [];
+var curOrder = null;
+var drvInfo  = {};
+var reports  = {};
+
+try{ drvInfo  = JSON.parse(localStorage.getItem('lk-drv')||'{}'); }catch(e){}
+try{ reports  = JSON.parse(localStorage.getItem('lk-rep')||'{}'); }catch(e){}
+
+// ────────────────────────────
+// 초기화
+// ────────────────────────────
+(function(){
+  var d=new Date();
+  document.getElementById('d-date').value = d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+  // 저장된 기사 정보 복원
+  if(drvInfo.name) document.getElementById('drv-name').value = drvInfo.name;
+  if(drvInfo.car)  document.getElementById('drv-car').value  = drvInfo.car;
+  if(drvInfo.tel)  document.getElementById('drv-tel').value  = drvInfo.tel;
+})();
+
+function p2(n){return('0'+n).slice(-2);}
+function now(){var d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes());}
+
+// ────────────────────────────
+// 화면 전환
+// ────────────────────────────
+function show(id){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function goBack(id){ show(id); }
+
+// ────────────────────────────
+// 배차 조회
+// ────────────────────────────
+function doSearch(){
+  var date  = document.getElementById('d-date').value.trim();
+  var batch = document.getElementById('d-batch').value.trim();
+  var msg   = document.getElementById('msg1');
+  var list  = document.getElementById('cust-list');
+
+  if(!date){toast('날짜를 선택해주세요');return;}
+  if(!batch){toast('배차번호를 입력해주세요');return;}
+
+  setMsg(msg,'info','조회 중...');
+  list.innerHTML='';
+
+  jsonp(API, {action:'query', date:date, batch:batch}, function(err, data){
+    if(err||!data||!data.ok){
+      setMsg(msg,'err','조회 실패: '+(err||'서버 오류'));
+      return;
+    }
+    msg.style.display='none';
+    if(!data.rows||!data.rows.length){
+      list.innerHTML='<div class="empty"><div class="empty-ico">📭</div><div class="empty-t">데이터 없음</div><div class="empty-s">해당 날짜·배차번호로 등록된<br>거래처가 없습니다</div></div>';
+      return;
+    }
+    custList = data.rows;
+    renderList(data.rows);
+    toast('✅ '+data.rows.length+'개 거래처 조회됨');
+  });
+}
+
+function repKey(o){return o.date+'|'+o.batch+'|'+o.cust;}
+function getRep(o){return reports[repKey(o)]||{};}
+
+function renderList(rows){
+  var el = document.getElementById('cust-list');
+  el.innerHTML = rows.map(function(o,i){
+    var rep = getRep(o);
+    var s   = rep.status||'wait';
+    var cls = s==='done'?'done':s==='arr'?'arr':s==='dep'?'dep':'';
+    var b   = badgeHtml(s);
+    var times = '';
+    if(rep.depTime)  times += '<span style="font-size:11px;color:var(--t2)">출발 '+rep.depTime+'</span>';
+    if(rep.arrTime)  times += '<span style="font-size:11px;color:var(--t2)">도착 '+rep.arrTime+'</span>';
+    if(rep.doneTime) times += '<span style="font-size:11px;color:var(--t2)">하차 '+rep.doneTime+'</span>';
+    return '<div class="citem '+cls+'" onclick="selectCust('+i+')">'
+      +'<div class="citem-name">'+o.cust+'</div>'
+      +'<div class="citem-addr">📍 '+(o.addr||'-')+'</div>'
+      +'<div class="citem-row">'+b+times
+      +(o.item?'<span style="font-size:11px;color:var(--t3)">'+o.item+(o.qty?' '+o.qty:'')+'</span>':'')
+      +'</div></div>';
+  }).join('');
+}
+
+function badgeHtml(s){
+  if(s==='done') return '<span class="badge badge-done">✅ 하차완료</span>';
+  if(s==='arr')  return '<span class="badge badge-arr">📍 도착</span>';
+  if(s==='dep')  return '<span class="badge badge-dep">🚚 출발중</span>';
+  return '<span class="badge badge-wait">⏳ 대기</span>';
+}
+
+// ────────────────────────────
+// 거래처 선택 → 기사정보 화면
+// ────────────────────────────
+function selectCust(idx){
+  curOrder = custList[idx];
+  document.getElementById('s2-title').textContent = curOrder.cust;
+  document.getElementById('s2-sub').textContent   = '배차 '+curOrder.batch+' · '+curOrder.date;
+  show('s2');
+}
+
+// ────────────────────────────
+// 기사 정보 확인 → 시간기록 화면
+// ────────────────────────────
+function confirmDriver(){
+  var name = document.getElementById('drv-name').value.trim();
+  var car  = document.getElementById('drv-car').value.trim();
+  var tel  = document.getElementById('drv-tel').value.trim();
+  if(!name){toast('기사 이름을 입력해주세요');return;}
+  if(!car) {toast('차량번호를 입력해주세요');return;}
+
+  drvInfo = {name:name, car:car, tel:tel};
+  localStorage.setItem('lk-drv', JSON.stringify(drvInfo));
+
+  var o = curOrder;
+  var rep = getRep(o);
+
+  // 상세 화면 채우기
+  document.getElementById('det-name').textContent    = o.cust;
+  document.getElementById('det-meta').innerHTML      = '배차 '+o.batch+' · '+o.date+(o.item?' · <span style="color:var(--accent)">'+o.item+(o.qty?' '+o.qty:'')+'</span>':'');
+  document.getElementById('det-addr-txt').textContent= o.addr||'-';
+  document.getElementById('det-badge').innerHTML     = badgeHtml(rep.status||'wait');
+
+  document.getElementById('drv-initial').textContent = name.charAt(0);
+  document.getElementById('drv-summary').textContent  = name+' 기사님';
+  document.getElementById('drv-car-summary').textContent = car+(tel?' · '+tel:'');
+
+  document.getElementById('t-dep').value  = rep.depTime ||'';
+  document.getElementById('t-arr').value  = rep.arrTime ||'';
+  document.getElementById('t-done').value = rep.doneTime||'';
+  document.getElementById('det-memo').value= rep.memo   ||'';
+
+  // 시간카드 상태 업데이트
+  updateTCards(rep);
+  document.getElementById('push-msg').style.display='none';
+
+  show('s3');
+}
+
+// ────────────────────────────
+// 시간 기록
+// ────────────────────────────
+function onTime(type, val){
+  if(!curOrder) return;
+  var rep = getRep(curOrder);
+  if(type==='dep')  rep.depTime  = val;
+  if(type==='arr')  rep.arrTime  = val;
+  if(type==='done') rep.doneTime = val;
+  if     (type==='done'&&val)                           rep.status='done';
+  else if(type==='arr' &&val&&rep.status!=='done')       rep.status='arr';
+  else if(type==='dep' &&val&&rep.status!=='done'&&rep.status!=='arr') rep.status='dep';
+  saveRep(rep);
+  document.getElementById('det-badge').innerHTML = badgeHtml(rep.status||'wait');
+  updateTCards(rep);
+  pushReport(rep);
+}
+
+function onMemo(val){
+  if(!curOrder) return;
+  var rep=getRep(curOrder);
+  rep.memo=val;
+  saveRep(rep);
+}
+
+function stamp(type){
+  var t=now();
+  document.getElementById('t-'+type).value=t;
+  onTime(type, t);
+  var lb={dep:'🚚 출발 기록',arr:'📍 도착 기록',done:'✅ 하차완료 기록'};
+  toast(lb[type]+': '+t);
+}
+
+function updateTCards(rep){
+  var dc=document.getElementById('tc-dep');
+  var ac=document.getElementById('tc-arr');
+  var nc=document.getElementById('tc-done');
+  dc.className='tcard'+(rep.depTime?' active-dep':'');
+  ac.className='tcard'+(rep.arrTime?' active-arr':'');
+  nc.className='tcard'+(rep.doneTime?' active-done':'');
+}
+
+function saveRep(rep){
+  reports[repKey(curOrder)]=rep;
+  localStorage.setItem('lk-rep', JSON.stringify(reports));
+}
+
+// ────────────────────────────
+// Sheets 저장
+// ────────────────────────────
+function pushReport(rep){
+  var msg=document.getElementById('push-msg');
+  if(!API||!curOrder){setMsg(msg,'warn','⚠️ API URL 미설정');return;}
+  setMsg(msg,'info','⏳ 저장 중...');
+  var o=curOrder;
+  fetch(API,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({
+      action:'report', date:o.date, batch:o.batch, cust:o.cust,
+      driver:drvInfo.name||'', carNum:drvInfo.car||'', tel:drvInfo.tel||'',
+      status:rep.status||'', depTime:rep.depTime||'',
+      arrTime:rep.arrTime||'', doneTime:rep.doneTime||'', memo:rep.memo||''
+    })
+  }).then(function(){
+    setMsg(msg,'ok','✅ 저장 완료');
+    setTimeout(function(){msg.style.display='none';},3000);
+    // 목록 새로고침
+    if(custList.length) renderList(custList);
+  }).catch(function(){setMsg(msg,'err','❌ 저장 실패');});
+}
+
+// ────────────────────────────
+// 네비 연동
+// ────────────────────────────
+function openNaver(){
+  if(!curOrder) return;
+  var dest = curOrder.addr || curOrder.cust;
+  // 네이버 지도 경로 (출발지 고정: 라이온코리아)
+  var url = 'nmap://route/car?slat=37.4562&slng=126.6189&sname='+encodeURIComponent(ORIGIN_NAME)
+    +'&dlat=&dlng=&dname='+encodeURIComponent(dest)+'&appname=lionkorea';
+  // 모바일 앱 시도 후 웹으로 폴백
+  window.location.href = url;
+  setTimeout(function(){
+    window.open('https://map.naver.com/p/directions/'+encodeURIComponent(ORIGIN_ADDR)+'/'+encodeURIComponent(dest)+'/-/car?c=15,0,0,0,dh','_blank');
+  }, 1500);
+}
+
+function openKakao(){
+  if(!curOrder) return;
+  var dest = curOrder.addr || curOrder.cust;
+  // 카카오맵 경로
+  var url = 'kakaomap://route?sp=37.4562,126.6189&ep=&by=CAR&remain_time=true';
+  window.location.href = url;
+  setTimeout(function(){
+    window.open('https://map.kakao.com/link/to/'+encodeURIComponent(dest)+',0,0','_blank');
+  }, 1500);
+}
+
+// ────────────────────────────
+// JSONP
+// ────────────────────────────
+function jsonp(url, params, cb){
+  var name='lk'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  var qs=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  var timer=setTimeout(function(){cleanup();cb('타임아웃');},15000);
+  function cleanup(){delete window[name];var s=document.getElementById(name);if(s)s.parentNode.removeChild(s);clearTimeout(timer);}
+  window[name]=function(data){cleanup();cb(null,data);};
+  var s=document.createElement('script');
+  s.id=name; s.src=url+'?'+qs+'&callback='+name;
+  s.onerror=function(){cleanup();cb('로드 오류');};
+  document.head.appendChild(s);
+}
+
+// ────────────────────────────
+// 유틸
+// ────────────────────────────
+function setMsg(el,type,txt){el.className='msg '+type;el.textContent=txt;el.style.display='block';}
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('on');},2500);
+}
+</script>
+</body>
+</html>
